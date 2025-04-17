@@ -19,9 +19,10 @@ const app = express();
 app.use(helmet()); // 보안 헤더 추가
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*", // 프로덕션에서는 구체적인 출처 설정
+    origin: ["http://localhost:5173", "http://localhost:5174"], // 배열로 변경
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 app.use(express.json());
@@ -54,8 +55,9 @@ const server = createServer(app);
 // Socket.io 설정
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: ["http://localhost:5173", "http://localhost:5174"], // 배열로 변경
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -64,7 +66,7 @@ const consultants = {}; // 상담사 상태 관리
 const calls = {}; // 진행 중인 통화 관리
 
 // Socket.io 연결 처리
-io.on("connection", socket => {
+io.on("connection", (socket) => {
   console.log("사용자가 연결되었습니다:", socket.id);
 
   // 상담사 상태 업데이트
