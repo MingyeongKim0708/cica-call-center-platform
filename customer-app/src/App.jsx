@@ -31,17 +31,17 @@ function App() {
       peerConnectionRef.current = peerConnection;
 
       // 미디어 스트림을 PeerConnection에 추가
-      stream.getTracks().forEach((track) => {
+      stream.getTracks().forEach(track => {
         peerConnection.addTrack(track, stream);
       });
 
       // 상대방 미디어 스트림 처리
-      peerConnection.ontrack = (event) => {
+      peerConnection.ontrack = event => {
         remoteAudioRef.current.srcObject = event.streams[0];
       };
 
       // ICE 후보 처리
-      peerConnection.onicecandidate = (event) => {
+      peerConnection.onicecandidate = event => {
         if (event.candidate) {
           socketRef.current.emit("ice-candidate", {
             candidate: event.candidate,
@@ -155,7 +155,7 @@ function App() {
     if (localAudioRef.current && localAudioRef.current.srcObject) {
       localAudioRef.current.srcObject
         .getTracks()
-        .forEach((track) => track.stop());
+        .forEach(track => track.stop());
     }
 
     setIsCallActive(false);
@@ -189,7 +189,7 @@ function App() {
             placeholder="010-1234-5678"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={e => setPhoneNumber(e.target.value)}
             disabled={isCallActive || isConnecting}
           />
         </div>

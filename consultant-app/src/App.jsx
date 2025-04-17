@@ -136,17 +136,17 @@ function App() {
       peerConnectionRef.current = peerConnection;
 
       // 미디어 스트림을 PeerConnection에 추가
-      stream.getTracks().forEach((track) => {
+      stream.getTracks().forEach(track => {
         peerConnection.addTrack(track, stream);
       });
 
       // 상대방 미디어 스트림 처리
-      peerConnection.ontrack = (event) => {
+      peerConnection.ontrack = event => {
         remoteAudioRef.current.srcObject = event.streams[0];
       };
 
       // ICE 후보 처리
-      peerConnection.onicecandidate = (event) => {
+      peerConnection.onicecandidate = event => {
         if (event.candidate && currentCall) {
           socketRef.current.emit("ice-candidate", {
             candidate: event.candidate,
@@ -171,7 +171,7 @@ function App() {
   };
 
   // 고객 정보 가져오기
-  const fetchCustomerInfo = async (phoneNumber) => {
+  const fetchCustomerInfo = async phoneNumber => {
     try {
       const response = await fetch(`${API_URL}/customers/phone/${phoneNumber}`);
 
@@ -268,7 +268,7 @@ function App() {
     if (localAudioRef.current && localAudioRef.current.srcObject) {
       localAudioRef.current.srcObject
         .getTracks()
-        .forEach((track) => track.stop());
+        .forEach(track => track.stop());
     }
 
     setIsCallActive(false);
@@ -279,16 +279,14 @@ function App() {
   };
 
   // 상품 상세 정보 보기
-  const viewItemDetails = (item) => {
+  const viewItemDetails = item => {
     setSelectedItem(item);
   };
 
   // 상품 교환/반품 처리
   const processReturn = async (orderItemId, type) => {
     try {
-      const item = orderItems.find(
-        (item) => item.order_item_id === orderItemId
-      );
+      const item = orderItems.find(item => item.order_item_id === orderItemId);
 
       if (!item) {
         throw new Error("상품을 찾을 수 없습니다.");
@@ -315,7 +313,7 @@ function App() {
       }
 
       // 주문 아이템 상태 업데이트
-      const updatedItems = orderItems.map((item) => {
+      const updatedItems = orderItems.map(item => {
         if (item.order_item_id === orderItemId) {
           return {
             ...item,
@@ -334,7 +332,7 @@ function App() {
       console.error("교환/반품 처리 오류:", error);
 
       // API 연결 실패 시 클라이언트 측에서만 상태 업데이트 (테스트용)
-      const updatedItems = orderItems.map((item) => {
+      const updatedItems = orderItems.map(item => {
         if (item.order_item_id === orderItemId) {
           return {
             ...item,
@@ -505,7 +503,7 @@ function App() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {orderItems.map((item) => (
+                        {orderItems.map(item => (
                           <tr
                             key={item.order_item_id}
                             className="hover:bg-gray-50"
