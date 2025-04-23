@@ -214,34 +214,37 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("사용자 연결 해제:", socket.id);
 
-    // 상담사 연결 해제 처리
-    const consultantId = findConsultantBySocketId(socket.id);
-    if (consultantId) {
-      delete consultants[consultantId];
-      console.log("상담사 연결 해제:", consultantId);
-    }
-
-    // 고객 연결 해제 처리
     const phoneNumber = findCallBySocketId(socket.id);
     if (phoneNumber) {
-      // 상대방에게 통화 종료 알림
-      const call = calls[phoneNumber];
-      const targetSocketId =
-        socket.id === call.customerSocketId
-          ? call.consultantSocketId
-          : call.customerSocketId;
-
-      io.to(targetSocketId).emit("call-ended");
+      const { consultantId } = calls[phoneNumber];
 
       // 상담사 상태 업데이트
-      if (call.consultantId && consultants[call.consultantId]) {
-        consultants[call.consultantId].isAvailable = true;
+      if (consultantId && consultants[consultantId]) {
+        consultants[consultantId].isAvailable = true;
+        console.log("상담사 상태 업데이트: 가용 상태로 변경", consultantId);
       }
 
       // 통화 정보 삭제
       delete calls[phoneNumber];
+      console.log("통화 정보 삭제 완료:", phoneNumber);
+    }
+  });
 
-      console.log("통화 종료 (연결 해제):", phoneNumber);
+  socket.on("end-call", ({ phoneNumber }) => {
+    console.log("고객이 통화를 종료했습니다:", phoneNumber);
+
+    if (calls[phoneNumber]) {
+      const { consultantId } = calls[phoneNumber];
+
+      // 상담사 상태 업데이트
+      if (consultantId && consultants[consultantId]) {
+        consultants[consultantId].isAvailable = true;
+        console.log("상담사 상태 업데이트: 가용 상태로 변경", consultantId);
+      }
+
+      // 통화 정보 삭제
+      delete calls[phoneNumber];
+      console.log("통화 정보 삭제 완료:", phoneNumber);
     }
   });
 });

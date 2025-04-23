@@ -19,6 +19,13 @@ function App() {
   // WebRTC 설정
   const setupWebRTC = async () => {
     try {
+      // 기존 PeerConnection 정리
+      if (peerConnectionRef.current) {
+        console.log("기존 PeerConnection 정리");
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+
       // 미디어 스트림 획득
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       localAudioRef.current.srcObject = stream;
@@ -83,6 +90,13 @@ function App() {
     }
 
     setIsConnecting(true);
+
+    // 기존 소켓 연결 정리
+    if (socketRef.current) {
+      console.log("기존 소켓 연결 정리");
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
 
     // 소켓 연결
     const socket = io(SOCKET_URL);
