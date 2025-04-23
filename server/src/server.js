@@ -23,7 +23,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:5174",
       "https://cica-call-center-platform-customer-mu.vercel.app",
-      "https://cica-call-center-platform-consultant-mu.vercel.app",
+      "https://cica-call-center-platform-consultant.vercel.app", // 추가
     ], // 배열로 변경
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -64,7 +64,7 @@ const io = new Server(server, {
       "http://localhost:5173",
       "http://localhost:5174",
       "https://cica-call-center-platform-customer-mu.vercel.app",
-      "https://cica-call-center-platform-consultant-mu.vercel.app",
+      "https://cica-call-center-platform-consultant.vercel.app", // 추가
     ], // 배열로 변경
     methods: ["GET", "POST"],
     credentials: true,
