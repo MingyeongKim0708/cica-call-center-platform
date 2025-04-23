@@ -24,4 +24,8 @@ router.put("/items/:orderItemId/status", orderController.updateOrderItemStatus);
 // PUT /api/orders/:orderId/status
 router.put("/:orderId/status", orderController.updateOrderStatus);
 
+// 새 주문 생성
+// POST /api/orders
+router.post("/", orderController.createOrder);
+
 export default router;

@@ -8,6 +8,12 @@ import {
   CreditCard,
   MapPin,
   X,
+  ShoppingCart, // 추가
+  PlusCircle, // 추가
+  Save, // 추가
+  Package, // 추가
+  Trash2, // 추가
+  Plus, // 추가
 } from "lucide-react";
 import io from "socket.io-client";
 
@@ -30,6 +36,29 @@ function App() {
   const remoteAudioRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const socketRef = useRef(null);
+
+  // 기존 상태 아래에 추가
+  const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+  const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
+  const [availableProducts, setAvailableProducts] = useState([]);
+  const [newOrder, setNewOrder] = useState({
+    status: "접수",
+    payment_method: "신용카드",
+    items: [],
+    total_amount: 0,
+  });
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    email: "",
+  });
+
+  // 주문 아이템 입력을 위한 임시 상태
+  const [tempOrderItem, setTempOrderItem] = useState({
+    product_id: "",
+    quantity: 1,
+  });
 
   // 컴포넌트 마운트 시 실행
   useEffect(() => {
@@ -111,6 +140,9 @@ function App() {
       endCall();
     });
 
+    // 컴포넌트 마운트시 상품 목록 가져오기
+    fetchAvailableProducts();
+
     return () => {
       if (socket) {
         socket.disconnect();
@@ -136,17 +168,17 @@ function App() {
       peerConnectionRef.current = peerConnection;
 
       // 미디어 스트림을 PeerConnection에 추가
-      stream.getTracks().forEach(track => {
+      stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);
       });
 
       // 상대방 미디어 스트림 처리
-      peerConnection.ontrack = event => {
+      peerConnection.ontrack = (event) => {
         remoteAudioRef.current.srcObject = event.streams[0];
       };
 
       // ICE 후보 처리
-      peerConnection.onicecandidate = event => {
+      peerConnection.onicecandidate = (event) => {
         if (event.candidate && currentCall) {
           socketRef.current.emit("ice-candidate", {
             candidate: event.candidate,
@@ -171,7 +203,7 @@ function App() {
   };
 
   // 고객 정보 가져오기
-  const fetchCustomerInfo = async phoneNumber => {
+  const fetchCustomerInfo = async (phoneNumber) => {
     try {
       const response = await fetch(`${API_URL}/customers/phone/${phoneNumber}`);
       console.log("logis:", response);
@@ -187,55 +219,10 @@ function App() {
       console.error("고객 정보 조회 오류:", error);
 
       // API 연결 실패 시 테스트를 위한 Mock 데이터 사용
-      const mockCustomerInfo = {
-        name: "대실패",
-        phone: phoneNumber,
-        address: "서울시 강남구 테헤란로 123, 456호",
-        email: "hong@example.com",
-        customer_id: 1,
-      };
-
-      const mockOrderItems = [
-        {
-          order_item_id: 1,
-          name: "스마트폰 케이스",
-          price: 25000,
-          order_date: "2023-04-10",
-          status: "배송완료",
-          return_price: 2500,
-          exchange_price: 2500,
-          returnable: true,
-          exchangable: true,
-          description: "충격 방지 투명 케이스, 아이폰 13 Pro 호환",
-        },
-        {
-          order_item_id: 2,
-          name: "블루투스 이어폰",
-          price: 89000,
-          order_date: "2023-03-25",
-          status: "배송완료",
-          return_price: 5000,
-          exchange_price: 5000,
-          returnable: true,
-          exchangable: true,
-          description: "노이즈 캔슬링 기능, 30시간 배터리 지속",
-        },
-        {
-          order_item_id: 3,
-          name: "스마트워치",
-          price: 299000,
-          order_date: "2023-04-01",
-          status: "배송중",
-          return_price: 10000,
-          exchange_price: 10000,
-          returnable: true,
-          exchangable: true,
-          description: "건강 모니터링, GPS 탑재, 생활방수",
-        },
-      ];
-
-      setCustomerInfo(mockCustomerInfo);
-      setOrderItems(mockOrderItems);
+      // 없는 번호인 경우, 이전 고객 정보를 초기화하고 신규 가입 유도
+      setCustomerInfo(null);
+      setOrderItems([]);
+      alert("등록되지 않은 고객입니다. 고객 정보를 등록해주세요.");
     }
   };
 
@@ -269,7 +256,7 @@ function App() {
     if (localAudioRef.current && localAudioRef.current.srcObject) {
       localAudioRef.current.srcObject
         .getTracks()
-        .forEach(track => track.stop());
+        .forEach((track) => track.stop());
     }
 
     setIsCallActive(false);
@@ -279,15 +266,242 @@ function App() {
     setSelectedItem(null);
   };
 
+  // 사용 가능한 상품 목록 가져오기
+  const fetchAvailableProducts = async () => {
+    try {
+      // 실제로는 API 호출이 필요하지만, 테스트를 위한 Mock 데이터 사용
+      const mockProducts = [
+        {
+          product_id: 1,
+          name: "스마트폰 케이스",
+          price: 25000,
+          description: "충격 방지 투명 케이스, 아이폰 13 Pro 호환",
+          stock_quantity: 100,
+        },
+        {
+          product_id: 2,
+          name: "블루투스 이어폰",
+          price: 89000,
+          description: "노이즈 캔슬링 기능, 30시간 배터리 지속",
+          stock_quantity: 50,
+        },
+        {
+          product_id: 3,
+          name: "스마트워치",
+          price: 299000,
+          description: "건강 모니터링, GPS 탑재, 생활방수",
+          stock_quantity: 30,
+        },
+      ];
+
+      setAvailableProducts(mockProducts);
+    } catch (error) {
+      console.error("상품 목록 조회 오류:", error);
+    }
+  };
+
+  // 주문 생성 모달 열기
+  const openCreateOrderModal = () => {
+    if (!customerInfo) {
+      alert("고객 정보가 필요합니다. 먼저 고객 정보를 등록해주세요.");
+      setShowCreateCustomerModal(true);
+      return;
+    }
+
+    setNewOrder({
+      ...newOrder,
+      customer_id: customerInfo.customer_id,
+    });
+    setShowCreateOrderModal(true);
+  };
+
+  // 새 고객 등록 모달 열기
+  const openCreateCustomerModal = () => {
+    if (currentCall) {
+      setNewCustomer({
+        ...newCustomer,
+        phone: currentCall.phoneNumber || "",
+      });
+    }
+    setShowCreateCustomerModal(true);
+  };
+
+  // 주문 아이템 추가
+  const addOrderItem = () => {
+    if (!tempOrderItem.product_id || tempOrderItem.quantity < 1) {
+      alert("상품과 수량을 올바르게 선택해주세요.");
+      return;
+    }
+
+    const selectedProduct = availableProducts.find(
+      (p) => p.product_id == tempOrderItem.product_id
+    );
+
+    if (!selectedProduct) {
+      alert("선택한 상품을 찾을 수 없습니다.");
+      return;
+    }
+
+    const subtotal = selectedProduct.price * tempOrderItem.quantity;
+
+    const newItem = {
+      product_id: parseInt(tempOrderItem.product_id),
+      quantity: parseInt(tempOrderItem.quantity),
+      subtotal: subtotal,
+      status: "정상",
+      product_name: selectedProduct.name,
+      product_price: selectedProduct.price,
+    };
+
+    setNewOrder({
+      ...newOrder,
+      items: [...newOrder.items, newItem],
+      total_amount: (newOrder.total_amount || 0) + subtotal,
+    });
+
+    // 임시 입력 초기화
+    setTempOrderItem({
+      product_id: "",
+      quantity: 1,
+    });
+  };
+
+  // 주문 아이템 삭제
+  const removeOrderItem = (index) => {
+    const removedItem = newOrder.items[index];
+    const updatedItems = newOrder.items.filter((_, i) => i !== index);
+
+    setNewOrder({
+      ...newOrder,
+      items: updatedItems,
+      total_amount: newOrder.total_amount - removedItem.subtotal,
+    });
+  };
+
+  // 새 주문 생성 제출
+  const submitCreateOrder = async () => {
+    try {
+      if (!newOrder.customer_id) {
+        alert("고객 정보가 필요합니다.");
+        return;
+      }
+
+      if (!newOrder.items.length) {
+        alert("주문 상품을 하나 이상 추가해주세요.");
+        return;
+      }
+
+      const orderData = {
+        customer_id: newOrder.customer_id,
+        status: newOrder.status,
+        total_amount: newOrder.total_amount,
+        payment_method: newOrder.payment_method,
+        orderItems: newOrder.items.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+          status: item.status,
+        })),
+      };
+
+      // 실제 API 호출
+      const response = await fetch(`${API_URL}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "주문 생성 실패");
+      }
+
+      const result = await response.json();
+      console.log("주문 생성 성공:", result);
+
+      // 성공 시 모달 닫기
+      alert("주문이 성공적으로 생성되었습니다.");
+      setShowCreateOrderModal(false);
+      resetNewOrder();
+
+      // 고객의 주문 목록 갱신
+      if (customerInfo && customerInfo.customer_id) {
+        fetchCustomerInfo(customerInfo.phone);
+      }
+    } catch (error) {
+      console.error("주문 생성 오류:", error);
+      alert(`주문 생성 중 오류가 발생했습니다: ${error.message}`);
+    }
+  };
+
+  // 새 고객 등록 제출
+  const submitCreateCustomer = async () => {
+    try {
+      if (!newCustomer.name || !newCustomer.phone || !newCustomer.address) {
+        alert("이름, 전화번호, 주소는 필수 항목입니다.");
+        return;
+      }
+
+      // API 호출 (테스트에서는 생략)
+      console.log("고객 등록 데이터:", newCustomer);
+
+      // 임시 고객 데이터 (실제로는 API 응답값을 사용)
+      const customerData = {
+        ...newCustomer,
+        customer_id: Date.now(), // 임시 ID
+        join_date: new Date().toISOString(),
+      };
+
+      // 고객 정보 설정
+      setCustomerInfo(customerData);
+
+      // 성공 시 모달 닫기
+      alert("고객 정보가 성공적으로 등록되었습니다.");
+      setShowCreateCustomerModal(false);
+      resetNewCustomer();
+    } catch (error) {
+      console.error("고객 등록 오류:", error);
+      alert("고객 등록 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 새 주문 상태 초기화
+  const resetNewOrder = () => {
+    setNewOrder({
+      status: "접수",
+      payment_method: "신용카드",
+      items: [],
+      total_amount: 0,
+    });
+    setTempOrderItem({
+      product_id: "",
+      quantity: 1,
+    });
+  };
+
+  // 새 고객 상태 초기화
+  const resetNewCustomer = () => {
+    setNewCustomer({
+      name: "",
+      phone: currentCall?.phoneNumber || "",
+      address: "",
+      email: "",
+    });
+  };
+
   // 상품 상세 정보 보기
-  const viewItemDetails = item => {
+  const viewItemDetails = (item) => {
     setSelectedItem(item);
   };
 
   // 상품 교환/반품 처리
   const processReturn = async (orderItemId, type) => {
     try {
-      const item = orderItems.find(item => item.order_item_id === orderItemId);
+      const item = orderItems.find(
+        (item) => item.order_item_id === orderItemId
+      );
 
       if (!item) {
         throw new Error("상품을 찾을 수 없습니다.");
@@ -314,7 +528,7 @@ function App() {
       }
 
       // 주문 아이템 상태 업데이트
-      const updatedItems = orderItems.map(item => {
+      const updatedItems = orderItems.map((item) => {
         if (item.order_item_id === orderItemId) {
           return {
             ...item,
@@ -333,7 +547,7 @@ function App() {
       console.error("교환/반품 처리 오류:", error);
 
       // API 연결 실패 시 클라이언트 측에서만 상태 업데이트 (테스트용)
-      const updatedItems = orderItems.map(item => {
+      const updatedItems = orderItems.map((item) => {
         if (item.order_item_id === orderItemId) {
           return {
             ...item,
@@ -436,44 +650,88 @@ function App() {
           ) : (
             <>
               {/* 고객 정보 */}
-              {customerInfo && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                  <h2 className="text-xl font-bold mb-4 flex items-center">
-                    <User className="w-5 h-5 mr-2" />
-                    고객 정보
-                  </h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">
-                        이름
-                      </h3>
-                      <p className="font-medium">{customerInfo.name}</p>
+              {/* 고객 정보 및 버튼 */}
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex-grow">
+                  {customerInfo ? (
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-bold mb-4 flex items-center">
+                        <User className="w-5 h-5 mr-2" />
+                        고객 정보
+                      </h2>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            이름
+                          </h3>
+                          <p className="font-medium">{customerInfo.name}</p>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-500">
+                            전화번호
+                          </h3>
+                          <p className="font-medium">{customerInfo.phone}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <h3 className="text-sm font-medium text-gray-500 flex items-center">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            주소
+                          </h3>
+                          <p className="font-medium">{customerInfo.address}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <h3 className="text-sm font-medium text-gray-500 flex items-center">
+                            <CreditCard className="w-4 h-4 mr-1" />
+                            이메일
+                          </h3>
+                          <p className="font-medium">
+                            {customerInfo.email || "정보 없음"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">
-                        전화번호
-                      </h3>
-                      <p className="font-medium">{customerInfo.phone}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <h3 className="text-sm font-medium text-gray-500 flex items-center">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        주소
-                      </h3>
-                      <p className="font-medium">{customerInfo.address}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <h3 className="text-sm font-medium text-gray-500 flex items-center">
-                        <CreditCard className="w-4 h-4 mr-1" />
-                        이메일
-                      </h3>
-                      <p className="font-medium">
-                        {customerInfo.email || "정보 없음"}
+                  ) : (
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-bold mb-4 flex items-center">
+                        <User className="w-5 h-5 mr-2" />
+                        등록되지 않은 고객
+                      </h2>
+                      <p className="text-gray-600 mb-4">
+                        전화번호: {currentCall?.phoneNumber || "알 수 없음"}
                       </p>
+                      <button
+                        onClick={openCreateCustomerModal}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
+                      >
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        고객 정보 등록
+                      </button>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+
+                {/* 주문 생성 및 고객 등록 버튼 */}
+                <div className="ml-4 flex flex-col space-y-2">
+                  <button
+                    onClick={openCreateOrderModal}
+                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center"
+                    disabled={!customerInfo}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    주문 생성
+                  </button>
+
+                  {customerInfo && (
+                    <button
+                      onClick={openCreateCustomerModal}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      고객 정보 수정
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {/* 주문 목록 */}
               {orderItems.length > 0 && (
@@ -504,7 +762,7 @@ function App() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {orderItems.map(item => (
+                        {orderItems.map((item) => (
                           <tr
                             key={item.order_item_id}
                             className="hover:bg-gray-50"
@@ -643,6 +901,284 @@ function App() {
                   닫기
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 주문 생성 모달 */}
+      {showCreateOrderModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">새 주문 생성</h3>
+              <button onClick={() => setShowCreateOrderModal(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    주문 상태
+                  </label>
+                  <select
+                    value={newOrder.status}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, status: e.target.value })
+                    }
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="접수">접수</option>
+                    <option value="처리중">처리중</option>
+                    <option value="배송중">배송중</option>
+                    <option value="완료">완료</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    결제 방법
+                  </label>
+                  <select
+                    value={newOrder.payment_method}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        payment_method: e.target.value,
+                      })
+                    }
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="신용카드">신용카드</option>
+                    <option value="계좌이체">계좌이체</option>
+                    <option value="무통장입금">무통장입금</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 상품 추가 폼 */}
+              <div className="border-t border-b py-4 mb-4">
+                <h4 className="text-lg font-medium mb-2">상품 추가</h4>
+                <div className="flex items-end gap-2 mb-4">
+                  <div className="flex-grow">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      상품 선택
+                    </label>
+                    <select
+                      value={tempOrderItem.product_id}
+                      onChange={(e) =>
+                        setTempOrderItem({
+                          ...tempOrderItem,
+                          product_id: e.target.value,
+                        })
+                      }
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="">상품을 선택하세요</option>
+                      {availableProducts.map((product) => (
+                        <option
+                          key={product.product_id}
+                          value={product.product_id}
+                        >
+                          {product.name} ({product.price.toLocaleString()}원)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-24">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      수량
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={tempOrderItem.quantity}
+                      onChange={(e) =>
+                        setTempOrderItem({
+                          ...tempOrderItem,
+                          quantity: parseInt(e.target.value) || 1,
+                        })
+                      }
+                      className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <button
+                    onClick={addOrderItem}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    추가
+                  </button>
+                </div>
+
+                {/* 추가된 상품 목록 */}
+                {newOrder.items.length > 0 ? (
+                  <div className="max-h-60 overflow-y-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                            상품명
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                            가격
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                            수량
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                            소계
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {newOrder.items.map((item, index) => (
+                          <tr key={index}>
+                            <td className="px-3 py-2">{item.product_name}</td>
+                            <td className="px-3 py-2">
+                              {item.product_price.toLocaleString()}원
+                            </td>
+                            <td className="px-3 py-2">{item.quantity}개</td>
+                            <td className="px-3 py-2">
+                              {item.subtotal.toLocaleString()}원
+                            </td>
+                            <td className="px-3 py-2">
+                              <button
+                                onClick={() => removeOrderItem(index)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-2">
+                    추가된 상품이 없습니다.
+                  </p>
+                )}
+              </div>
+
+              {/* 총액 */}
+              <div className="text-right mb-4">
+                <span className="font-medium">총 금액: </span>
+                <span className="text-xl font-bold text-blue-600">
+                  {newOrder.total_amount.toLocaleString()}원
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowCreateOrderModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                취소
+              </button>
+              <button
+                onClick={submitCreateOrder}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
+                disabled={!newOrder.items.length}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                주문 생성
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 고객 등록/수정 모달 */}
+      {showCreateCustomerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">
+                {customerInfo ? "고객 정보 수정" : "새 고객 등록"}
+              </h3>
+              <button onClick={() => setShowCreateCustomerModal(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  이름 *
+                </label>
+                <input
+                  type="text"
+                  value={newCustomer.name}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, name: e.target.value })
+                  }
+                  className="w-full p-2 border rounded-md"
+                  placeholder="고객 이름"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  전화번호 *
+                </label>
+                <input
+                  type="tel"
+                  value={newCustomer.phone}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, phone: e.target.value })
+                  }
+                  className="w-full p-2 border rounded-md"
+                  placeholder="010-0000-0000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  주소 *
+                </label>
+                <input
+                  type="text"
+                  value={newCustomer.address}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, address: e.target.value })
+                  }
+                  className="w-full p-2 border rounded-md"
+                  placeholder="배송 주소"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  이메일
+                </label>
+                <input
+                  type="email"
+                  value={newCustomer.email}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, email: e.target.value })
+                  }
+                  className="w-full p-2 border rounded-md"
+                  placeholder="이메일 (선택사항)"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowCreateCustomerModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                취소
+              </button>
+              <button
+                onClick={submitCreateCustomer}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {customerInfo ? "정보 수정" : "고객 등록"}
+              </button>
             </div>
           </div>
         </div>
