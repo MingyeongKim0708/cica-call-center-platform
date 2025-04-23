@@ -31,17 +31,17 @@ function App() {
       peerConnectionRef.current = peerConnection;
 
       // 미디어 스트림을 PeerConnection에 추가
-      stream.getTracks().forEach(track => {
+      stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);
       });
 
       // 상대방 미디어 스트림 처리
-      peerConnection.ontrack = event => {
+      peerConnection.ontrack = (event) => {
         remoteAudioRef.current.srcObject = event.streams[0];
       };
 
       // ICE 후보 처리
-      peerConnection.onicecandidate = event => {
+      peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
           socketRef.current.emit("ice-candidate", {
             candidate: event.candidate,
@@ -50,11 +50,21 @@ function App() {
         }
       };
 
-      // 연결 상태 변경 처리
       peerConnection.onconnectionstatechange = () => {
+        console.log("WebRTC 연결 상태:", peerConnection.connectionState);
         if (peerConnection.connectionState === "connected") {
           setIsConnecting(false);
+          console.log("isConnecting 상태 업데이트: false");
           setIsCallActive(true);
+          console.log("isCallActive 상태 업데이트: true");
+        } else if (
+          peerConnection.connectionState === "disconnected" ||
+          peerConnection.connectionState === "failed" ||
+          peerConnection.connectionState === "closed"
+        ) {
+          setIsCallActive(false);
+          setIsConnecting(false);
+          console.log("isConnecting 상태 업데이트: false");
         }
       };
 
@@ -82,6 +92,7 @@ function App() {
     const peerConnection = await setupWebRTC();
     if (!peerConnection) {
       setIsConnecting(false);
+      console.log("isConnecting 상태 업데이트: false");
       return;
     }
 
@@ -90,20 +101,21 @@ function App() {
 
     // 통화 수락 처리
     socket.on("call-accepted", async ({ consultantId }) => {
+      console.log("통화 수락 이벤트 수신:", consultantId);
       try {
-        // Offer 생성
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
 
-        // Offer 전송
         socket.emit("offer", {
           offer: peerConnection.localDescription,
           phoneNumber,
           consultantId,
         });
+        console.log("Offer 생성 및 전송 완료");
       } catch (error) {
         console.error("Offer 생성 오류:", error);
         setIsConnecting(false);
+        console.log("isConnecting 상태 업데이트: false");
       }
     });
 
@@ -136,6 +148,7 @@ function App() {
     socket.on("call-failed", () => {
       alert("현재 가능한 상담사가 없습니다. 잠시 후 다시 시도해주세요.");
       setIsConnecting(false);
+      console.log("isConnecting 상태 업데이트: false");
       socket.disconnect();
     });
   };
@@ -155,11 +168,12 @@ function App() {
     if (localAudioRef.current && localAudioRef.current.srcObject) {
       localAudioRef.current.srcObject
         .getTracks()
-        .forEach(track => track.stop());
+        .forEach((track) => track.stop());
     }
 
     setIsCallActive(false);
     setIsConnecting(false);
+    console.log("isConnecting 상태 업데이트: false");
   };
 
   // 컴포넌트 언마운트 시 정리
@@ -189,7 +203,7 @@ function App() {
             placeholder="010-1234-5678"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={phoneNumber}
-            onChange={e => setPhoneNumber(e.target.value)}
+            onChange={(e) => setPhoneNumber(e.target.value)}
             disabled={isCallActive || isConnecting}
           />
         </div>
