@@ -55,7 +55,12 @@ const server = createServer(app);
 // Socket.io 설정
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174"], // 배열로 변경
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://cica-call-center-platform-customer-mu.vercel.app",
+      "https://cica-call-center-platform-consultant-mu.vercel.app",
+    ], // 배열로 변경
     methods: ["GET", "POST"],
     credentials: true,
   },
