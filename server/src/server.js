@@ -214,6 +214,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("사용자 연결 해제:", socket.id);
 
+    // 통화 정보 찾기
     const phoneNumber = findCallBySocketId(socket.id);
     if (phoneNumber) {
       const { consultantId } = calls[phoneNumber];
@@ -227,6 +228,14 @@ io.on("connection", (socket) => {
       // 통화 정보 삭제
       delete calls[phoneNumber];
       console.log("통화 정보 삭제 완료:", phoneNumber);
+    }
+
+    // 상담사 정보 찾기
+    const consultantId = findConsultantBySocketId(socket.id);
+    if (consultantId) {
+      // 상담사 상태 삭제
+      delete consultants[consultantId];
+      console.log("상담사 연결 해제 및 상태 삭제:", consultantId);
     }
   });
 
