@@ -174,6 +174,7 @@ function App() {
   const fetchCustomerInfo = async (phoneNumber) => {
     try {
       const response = await fetch(`${API_URL}/customers/phone/${phoneNumber}`);
+      console.log("logis:", response);
 
       if (!response.ok) {
         throw new Error("고객 정보를 가져오는데 실패했습니다.");
@@ -187,7 +188,7 @@ function App() {
 
       // API 연결 실패 시 테스트를 위한 Mock 데이터 사용
       const mockCustomerInfo = {
-        name: "홍길동",
+        name: "대실패",
         phone: phoneNumber,
         address: "서울시 강남구 테헤란로 123, 456호",
         email: "hong@example.com",
