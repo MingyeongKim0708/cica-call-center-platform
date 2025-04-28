@@ -215,26 +215,27 @@ function App() {
 
   // 고객 정보 가져오기
   const fetchCustomerInfo = async (phoneNumber) => {
+    console.log("1. 고객 정보 요청 시작:", phoneNumber);
     try {
       const response = await fetch(`${API_URL}/customers/phone/${phoneNumber}`);
-      console.log("로그:", response);
+      console.log("2. API 응답 상태:", response.status);
+      console.log("3. response.ok 값:", response.ok);
 
       if (!response.ok) {
+        console.log("4. 에러 발생 조건 진입");
         throw new Error("고객 정보를 가져오는데 실패했습니다.");
       }
 
       const data = await response.json();
+      console.log("5. 응답 데이터:", data);
       setCustomerInfo(data.customer);
+      console.log("6. 고객 정보 설정 완료:", data.customer?.name);
       setOrderItems(data.orderItems);
     } catch (error) {
-      console.error("고객 정보 조회 오류:", error);
-
-      // 고객 정보 초기화
+      console.log("7. 에러 catch 블록 진입:", error.message);
       setCustomerInfo(null);
       setOrderItems([]);
-
-      // 명시적으로 모달 열기 (alert 대신 또는 이후에)
-      console.log("고객 정보 등록 모달 열기");
+      console.log("8. 고객 정보 모달 열기");
       alert("등록되지 않은 고객입니다. 고객 정보를 등록해주세요.");
       setShowCreateCustomerModal(true);
     }
