@@ -161,6 +161,7 @@ function App() {
         peerConnectionRef.current.close();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultantId, isAvailable]);
 
   // WebRTC 설정
