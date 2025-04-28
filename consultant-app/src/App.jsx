@@ -598,7 +598,7 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen">
       {/* 헤더 */}
       <header className="bg-blue-600 text-white p-4">
         <div className="flex justify-between items-center">
@@ -624,9 +624,9 @@ function App() {
       </header>
 
       {/* 메인 콘텐츠 */}
-      <div className="flex flex-grow overflow-hidden bg-red-400">
+      <div className="flex flex-grow overflow-hidden">
         {/* 통화 제어 패널 */}
-        <div className="w-64 bg-gray-800 text-white p-4 flex flex-col">
+        <div className="w-64 text-white p-4 flex flex-col">
           <h2 className="text-lg font-medium mb-4">통화 제어</h2>
 
           <div className="flex flex-col flex-grow justify-center items-center">
