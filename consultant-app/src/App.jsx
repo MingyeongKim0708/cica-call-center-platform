@@ -624,7 +624,7 @@ function App() {
       </header>
 
       {/* 메인 콘텐츠 */}
-      <div className="flex flex-grow overflow-hidden">
+      <div className="flex flex-grow overflow-hidden bg-red-400">
         {/* 통화 제어 패널 */}
         <div className="w-64 bg-gray-800 text-white p-4 flex flex-col">
           <h2 className="text-lg font-medium mb-4">통화 제어</h2>
