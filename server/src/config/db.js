@@ -9,6 +9,10 @@ const pool = new Pool({
     process.env.NODE_ENV === "production"
       ? { rejectUnauthorized: false }
       : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  statement_timeout: 5000, // 쿼리 실행 타임아웃 5초
 });
 
 // 연결 테스트 함수
@@ -25,21 +29,25 @@ export const testConnection = async () => {
 };
 
 // 쿼리 실행 함수 (재사용 목적)
+// 개선된 query 함수
 export const query = async (text, params) => {
+  const client = await pool.connect();
   const start = Date.now();
   try {
-    const res = await pool.query(text, params);
+    const res = await client.query(text, params);
     const duration = Date.now() - start;
     console.log("실행된 쿼리:", { text, duration, rows: res.rowCount });
     return res;
   } catch (error) {
     console.error("쿼리 실행 오류:", error);
     throw error;
+  } finally {
+    client.release();
   }
 };
 
 // 트랜잭션 실행 함수
-export const transaction = async callback => {
+export const transaction = async (callback) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

@@ -70,21 +70,30 @@ class Customer {
   }
 
   // 새 고객 생성
+  // Customer.js 모델 수정
   static async create(customerData) {
     const { name, phone, address, email } = customerData;
 
-    try {
-      const result = await db.query(
+    // 트랜잭션 사용
+    return await db.transaction(async (client) => {
+      // 중복 확인을 트랜잭션 내에서 수행
+      const checkResult = await client.query(
+        "SELECT * FROM customers WHERE phone = $1",
+        [phone]
+      );
+
+      if (checkResult.rows.length > 0) {
+        throw new Error("이미 등록된 전화번호입니다.");
+      }
+
+      const result = await client.query(
         `INSERT INTO customers (name, phone, address, email, join_date)
-         VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-         RETURNING *`,
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+       RETURNING *`,
         [name, phone, address, email]
       );
       return result.rows[0];
-    } catch (error) {
-      console.error("고객 생성 오류:", error);
-      throw error;
-    }
+    });
   }
 
   // 고객 정보 업데이트

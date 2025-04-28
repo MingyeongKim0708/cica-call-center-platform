@@ -137,7 +137,17 @@ function App() {
 
     // 통화 종료 수신
     socket.on("call-ended", () => {
+      console.log("통화 종료 이벤트 수신");
       endCall();
+
+      // 상담사 가용 상태로 변경 (endCall에서 처리하지 않는 경우를 대비)
+      setIsAvailable(true);
+
+      // 소켓으로 상태 변경 알림
+      socket.emit("consultant-status", {
+        consultantId,
+        isAvailable: true,
+      });
     });
 
     // 컴포넌트 마운트시 상품 목록 가져오기
@@ -257,6 +267,17 @@ function App() {
       localAudioRef.current.srcObject
         .getTracks()
         .forEach((track) => track.stop());
+    }
+
+    // 상담사 가용 상태로 변경
+    setIsAvailable(true);
+
+    // 소켓으로 상태 변경 알림
+    if (socketRef.current) {
+      socketRef.current.emit("consultant-status", {
+        consultantId,
+        isAvailable: true,
+      });
     }
 
     setIsCallActive(false);
@@ -444,15 +465,21 @@ function App() {
         return;
       }
 
-      // API 호출 (테스트에서는 생략)
-      console.log("고객 등록 데이터:", newCustomer);
+      // 실제 API 호출
+      const response = await fetch(`${API_URL}/customers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newCustomer),
+      });
 
-      // 임시 고객 데이터 (실제로는 API 응답값을 사용)
-      const customerData = {
-        ...newCustomer,
-        customer_id: Date.now(), // 임시 ID
-        join_date: new Date().toISOString(),
-      };
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "고객 등록 실패");
+      }
+
+      const customerData = await response.json();
 
       // 고객 정보 설정
       setCustomerInfo(customerData);
@@ -463,7 +490,7 @@ function App() {
       resetNewCustomer();
     } catch (error) {
       console.error("고객 등록 오류:", error);
-      alert("고객 등록 중 오류가 발생했습니다.");
+      alert(`고객 등록 중 오류가 발생했습니다: ${error.message}`);
     }
   };
 

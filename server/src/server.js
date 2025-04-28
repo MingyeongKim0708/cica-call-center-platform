@@ -185,7 +185,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 통화 종료
+  // 통화 종료 (소켓 연결 내부에 있는 핸들러만 유지)
   socket.on("end-call", ({ phoneNumber, consultantId }) => {
     if (calls[phoneNumber]) {
       // 상대방에게 통화 종료 알림
@@ -236,24 +236,6 @@ io.on("connection", (socket) => {
       // 상담사 상태 삭제
       delete consultants[consultantId];
       console.log("상담사 연결 해제 및 상태 삭제:", consultantId);
-    }
-  });
-
-  socket.on("end-call", ({ phoneNumber }) => {
-    console.log("고객이 통화를 종료했습니다:", phoneNumber);
-
-    if (calls[phoneNumber]) {
-      const { consultantId } = calls[phoneNumber];
-
-      // 상담사 상태 업데이트
-      if (consultantId && consultants[consultantId]) {
-        consultants[consultantId].isAvailable = true;
-        console.log("상담사 상태 업데이트: 가용 상태로 변경", consultantId);
-      }
-
-      // 통화 정보 삭제
-      delete calls[phoneNumber];
-      console.log("통화 정보 삭제 완료:", phoneNumber);
     }
   });
 });

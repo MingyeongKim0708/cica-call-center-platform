@@ -116,6 +116,11 @@ function App() {
     // 통화 수락 처리
     socket.on("call-accepted", async ({ consultantId }) => {
       console.log("통화 수락 이벤트 수신:", consultantId);
+
+      // 여기에 상태 업데이트 추가
+      setIsConnecting(false);
+      setIsCallActive(true);
+
       try {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
@@ -129,7 +134,7 @@ function App() {
       } catch (error) {
         console.error("Offer 생성 오류:", error);
         setIsConnecting(false);
-        console.log("isConnecting 상태 업데이트: false");
+        setIsCallActive(false); // 오류 시 통화 상태도 false로 변경
       }
     });
 
