@@ -217,7 +217,7 @@ function App() {
   const fetchCustomerInfo = async (phoneNumber) => {
     try {
       const response = await fetch(`${API_URL}/customers/phone/${phoneNumber}`);
-      console.log("logis:", response);
+      console.log("로그:", response);
 
       if (!response.ok) {
         throw new Error("고객 정보를 가져오는데 실패했습니다.");
@@ -229,11 +229,14 @@ function App() {
     } catch (error) {
       console.error("고객 정보 조회 오류:", error);
 
-      // API 연결 실패 시 테스트를 위한 Mock 데이터 사용
-      // 없는 번호인 경우, 이전 고객 정보를 초기화하고 신규 가입 유도
+      // 고객 정보 초기화
       setCustomerInfo(null);
       setOrderItems([]);
+
+      // 명시적으로 모달 열기 (alert 대신 또는 이후에)
+      console.log("고객 정보 등록 모달 열기");
       alert("등록되지 않은 고객입니다. 고객 정보를 등록해주세요.");
+      setShowCreateCustomerModal(true);
     }
   };
 

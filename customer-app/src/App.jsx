@@ -202,6 +202,7 @@ function App() {
         endCall();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCallActive]);
 
   return (
