@@ -1,0 +1,62 @@
+# 환경 변수 파일
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 의존성 디렉토리
+/node_modules
+/npm-debug.log
+/yarn-debug.log
+/yarn-error.log
+
+# 로그 파일
+/logs
+*.log
+
+# 런타임 데이터
+/.pnp
+.pnp.js
+
+# 테스트 커버리지
+/coverage
+
+# 캐시 디렉토리
+/.npm
+/.eslintcache
+/.cache
+/dist
+/build
+/tmp
+
+# OS 메타데이터
+.DS_Store
+Thumbs.db
+.directory
+
+# 에디터 설정
+/.idea
+/.vscode
+*.swp
+*.swo
+*~
+
+# 개발 & 빌드 도구
+/public/hot
+/public/storage
+
+# 로컬 SSL 인증서
+*.pem
+*.key
+*.crt
+
+# 실행 파일
+*.exe
+*.out
+*.pid
+
+# 압축 파일
+*.gz
+*.tar
+*.zip
