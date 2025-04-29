@@ -56,7 +56,7 @@ CREATE TABLE "orders" (
     "order_id" SERIAL PRIMARY KEY,
     "customer_id" INTEGER NOT NULL REFERENCES "customers"("customer_id"),
     "order_date" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "status" VARCHAR(255), -- 접수, 처리중, 배송중, 완료
+    "status" VARCHAR(255), -- 접수, 처리중, 배송중, 완료, 취소
     "total_amount" INTEGER,
     "payment_method" VARCHAR(255)
 );
@@ -68,7 +68,7 @@ CREATE TABLE "order_items" (
     "product_id" INTEGER NOT NULL REFERENCES "products"("product_id"),
     "quantity" INTEGER NOT NULL,
     "subtotal" INTEGER NOT NULL,
-    "status" VARCHAR(255) NOT NULL -- 정상, 교환중, 반품중
+    "status" VARCHAR(255) NOT NULL -- 정상, 교환중, 반품중, 취소
 );
 
 -- 상담 기록 테이블 생성
@@ -122,9 +122,11 @@ INSERT INTO products (name, description, price, stock_quantity, category_id, pla
 INSERT INTO orders (customer_id, order_date, status, total_amount, payment_method) VALUES
 (1, '2023-04-10 15:30:00', '완료', 25000, '신용카드'),
 (2, '2023-03-25 11:45:00', '완료', 89000, '신용카드'),
-(3, '2023-04-01 09:20:00', '배송중', 299000, '계좌이체');
+(3, '2023-04-01 09:20:00', '배송중', 324000, '계좌이체'),
+(1, '2023-04-15 16:30:00', '접수', 25000, '신용카드');
 
 INSERT INTO order_items (order_id, product_id, quantity, subtotal, status) VALUES
 (1, 1, 1, 25000, '정상'),
 (2, 2, 1, 89000, '정상'),
-(3, 3, 1, 299000, '정상');
+(3, 3, 1, 299000, '정상'),
+(4, 1, 1, 25000, '정상');

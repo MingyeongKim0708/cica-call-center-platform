@@ -15,16 +15,15 @@ import returnRoutes from "./routes/returns.js";
 // Express 앱 설정
 const app = express();
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map(origin => origin.trim())
+  : [];
+
 // 미들웨어
 app.use(helmet()); // 보안 헤더 추가
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://cica-call-center-platform-customer-mu.vercel.app",
-      "https://cica-call-center-platform-consultant.vercel.app", // 추가
-    ], // 배열로 변경
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -60,12 +59,7 @@ const server = createServer(app);
 // Socket.io 설정
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://cica-call-center-platform-customer-mu.vercel.app",
-      "https://cica-call-center-platform-consultant.vercel.app", // 추가
-    ], // 배열로 변경
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -76,7 +70,7 @@ const consultants = {}; // 상담사 상태 관리
 const calls = {}; // 진행 중인 통화 관리
 
 // Socket.io 연결 처리
-io.on("connection", (socket) => {
+io.on("connection", socket => {
   console.log("사용자가 연결되었습니다:", socket.id);
 
   // 상담사 상태 업데이트
