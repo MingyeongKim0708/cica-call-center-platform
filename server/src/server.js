@@ -37,6 +37,18 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/returns", returnRoutes);
 
+// 상담사 삭제용 test api (추후 삭제 필요)
+app.delete("/force-disconnect/:consultantId", (req, res) => {
+  const { consultantId } = req.params;
+  if (consultants[consultantId]) {
+    delete consultants[consultantId];
+    console.log(`강제로 삭제된 상담사: ${consultantId}`);
+    return res.json({ message: `${consultantId}번 상담사 삭제 완료` });
+  } else {
+    return res.status(404).json({ message: "상담사를 찾을 수 없습니다." });
+  }
+});
+
 // 기본 라우트
 app.get("/", (req, res) => {
   res.json({ message: "상담사 플랫폼 API가 실행 중입니다." });
