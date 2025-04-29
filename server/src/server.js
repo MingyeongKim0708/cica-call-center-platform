@@ -15,16 +15,15 @@ import returnRoutes from "./routes/returns.js";
 // Express 앱 설정
 const app = express();
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map(origin => origin.trim())
+  : [];
+
 // 미들웨어
 app.use(helmet()); // 보안 헤더 추가
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://cica-call-center-platform-customer-mu.vercel.app",
-      "https://cica-call-center-platform-consultant.vercel.app", // 추가
-    ], // 배열로 변경
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -37,6 +36,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/customers", customerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/returns", returnRoutes);
+
+// 상담사 삭제용 test api (추후 삭제 필요)
+app.delete("/force-disconnect/:consultantId", (req, res) => {
+  const { consultantId } = req.params;
+  if (consultants[consultantId]) {
+    delete consultants[consultantId];
+    console.log(`강제로 삭제된 상담사: ${consultantId}`);
+    return res.json({ message: `${consultantId}번 상담사 삭제 완료` });
+  } else {
+    return res.status(404).json({ message: "상담사를 찾을 수 없습니다." });
+  }
+});
 
 // 기본 라우트
 app.get("/", (req, res) => {
@@ -60,12 +71,7 @@ const server = createServer(app);
 // Socket.io 설정
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://cica-call-center-platform-customer-mu.vercel.app",
-      "https://cica-call-center-platform-consultant.vercel.app", // 추가
-    ], // 배열로 변경
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -76,7 +82,7 @@ const consultants = {}; // 상담사 상태 관리
 const calls = {}; // 진행 중인 통화 관리
 
 // Socket.io 연결 처리
-io.on("connection", (socket) => {
+io.on("connection", socket => {
   console.log("사용자가 연결되었습니다:", socket.id);
 
   // 상담사 상태 업데이트
