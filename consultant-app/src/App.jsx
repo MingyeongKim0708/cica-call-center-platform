@@ -675,6 +675,7 @@ function App() {
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
                 <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <>햄듭니다 햄들어요</>
                 <h2 className="text-xl font-medium">통화 연결 대기 중</h2>
                 <p>고객이 전화를 걸면 여기에 정보가 표시됩니다.</p>
               </div>
